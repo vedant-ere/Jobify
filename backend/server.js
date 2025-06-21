@@ -2,7 +2,7 @@ import express from "express"
 import dotenv from "dotenv";
 import connectDB from "./src/config/database.js";
 import User from "./src/models/UserModel.js";
-import userController from "../backend/src/controllers/userController.js";
+import authRoutes from "./src/routes/auth.js"
 
 dotenv.config();
 const app = express();
@@ -37,8 +37,7 @@ app.get("/health", (req, res) => {
     res.send("Server is running");
 })
 
-app.post("/register", userController.register)
-app.post("/login", userController.login)
+app.use('/api/auth', authRoutes);
 
 
 connectDB();

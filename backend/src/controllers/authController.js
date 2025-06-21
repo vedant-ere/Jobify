@@ -1,10 +1,9 @@
 import User from "../models/UserModel.js";
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 
-dotenv.config()
-const secretKey = process.env.JWT_SECRET
-
+dotenv.config();
+const secretKey = process.env.JWT_SECRET;
 
 const register = async (req, res) => {
   const { email, password } = req.body;
@@ -19,19 +18,18 @@ const register = async (req, res) => {
     await newUser.save();
 
     const payload = {
-      userId: newUser._id
-    }
-    const token = jwt.sign(payload, secretKey, { expiresIn: '24h' })
+      userId: newUser._id,
+    };
+    const token = jwt.sign(payload, secretKey, { expiresIn: "24h" });
     res.status(201).json({
       message: "User Successfully registered",
       token,
       user: {
         id: newUser._id,
         email: newUser.email,
-        profile: newUser.profile
-      }
-    })
-
+        profile: newUser.profile,
+      },
+    });
   } catch (error) {
     console.error("Registration Error:", error.message);
     res.status(500).send({ message: error.message });
@@ -41,12 +39,15 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await User.findOne({ email })
-    if (!user) return res.staus(400).send({ message: "Invalid credentials" })
+    const user = await User.findOne({ email });
+    if (!user) return res.staus(400).send({ message: "Invalid credentials" });
     const isMatch = await user.comparePassword(password);
-    if (!isMatch) return res.staus(401).send({ message: "Invalid credentials" })
+    if (!isMatch)
+      return res.staus(401).send({ message: "Invalid credentials" });
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' })
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "24h",
+    });
     res.status(200).json({
       message: "Login successful",
       token,
@@ -55,14 +56,21 @@ const login = async (req, res) => {
         email: user.email,
         profile: user.profile,
       },
-    })
-
-  }
-  catch (error) {
+    });
+  } catch (error) {
     res.status(500).json({ message: "Server error during login" });
   }
-}
+};
 
+const getProfile = async (req, res) => {
+  try {
+    res.json({
+      message: "Profile retrieved successfully",
+      user: req.user, // or specific fields you want to return
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error retrieving profile" });
+  }
+};
 
-
-export default { register, login }
+export { register, login, getProfile };
