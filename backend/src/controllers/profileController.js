@@ -1,4 +1,5 @@
 import User from "../models/UserModel.js";
+import mongoose from "mongoose";
 
 const updateSkills = async (req, res) => {
   try {
@@ -80,4 +81,42 @@ const updateSkills = async (req, res) => {
   }
 };
 
-export { updateSkills };
+const deleteSkills = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const skillId = req.params.skillId;
+
+    const user = await User.findById(userId);
+    // let exisitngSkills = []
+
+    if (!mongoose.Types.ObjectId.isValid(skillId)) {
+      return res.status(400).json({ error: "Invalid skill ID" });
+    }
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const originalCount = user.skills.length;
+
+    user.skills = user.skills.filter(
+      (skill) => skill._id.toString() !== skillId
+    );
+    if (user.skills.length === originalCount) {
+      return res.status(404).json({ error: "Skill not found" });
+    }
+    await user.save();
+  } catch (error) {
+    console.error("", error);
+  }
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    // Challenge: Allow users to update name, email, location, etc.
+    // What fields should be updatable?
+    // What validation do you need?
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update profile" });
+  }
+};
+
+export { updateSkills, deleteSkills };
