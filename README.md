@@ -1,8 +1,8 @@
-# JOBIFY 🚀
+# JOBIFY 
 
 A personalized job discovery platform that intelligently matches users with opportunities by analyzing their skills against real-time job market data.
 
-## 🎯 Overview
+## Overview
 
 JOBIFY transforms the traditional job search experience from passive browsing to proactive discovery. Instead of users manually searching through countless job boards, our platform continuously learns user preferences and market trends to surface relevant opportunities they might otherwise miss.
 
@@ -39,7 +39,7 @@ JOBIFY transforms the traditional job search experience from passive browsing to
    └── Feedback Collection
 ```
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 - **Backend**: Node.js with Express.js
 - **Database**: MongoDB
@@ -84,7 +84,7 @@ JOBIFY/
 └── server.js               # Application entry point
 ```
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -207,7 +207,7 @@ Before running this application, make sure you have the following installed:
 
 
 
-## 🔒 Security Features
+##  Security Features
 
 - **JWT Authentication**: Secure token-based authentication
 - **Password Hashing**: bcrypt for secure password storage
