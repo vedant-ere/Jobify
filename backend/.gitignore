@@ -33,3 +33,6 @@ debug/
 tmp/
 temp/
 .cache/
+
+#public
+uploads/
