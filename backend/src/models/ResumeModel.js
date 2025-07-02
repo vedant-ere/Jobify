@@ -19,10 +19,10 @@ const resumeSchema = new mongoose.Schema({
     type: Array,
 
   },
-  uploadDate : {
-    type : Date.now,
-    default : Date.now
-  }
+  uploadDate: {
+  type: Date,
+  default: Date.now,
+}
 });
 
 const Resume = mongoose.model('Resume', resumeSchema);

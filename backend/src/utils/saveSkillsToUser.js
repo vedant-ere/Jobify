@@ -12,6 +12,7 @@ const saveSkillsToUser = async (userId, userSkills) => {
     const existingSkillNames = user.skills.map((s) =>
       s.skillName.toLowerCase()
     );
+    
     const newSkills = userSkills.filter(
       (skill) => !existingSkillNames.includes(skill.skillName.toLowerCase())
     );

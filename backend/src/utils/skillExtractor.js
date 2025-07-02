@@ -90,7 +90,9 @@ const SKILL_DATABASE = {
 };
 
 
-const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 const extractSkills = (resumeText) => {
     if (!resumeText || typeof resumeText !== "string") {
@@ -112,7 +114,8 @@ const extractSkills = (resumeText) => {
             totalAliases += aliases.length;
 
             for(const alias of aliases){
-                const pattern = new RegExp(`\\b${alias.toLowerCase()}\\b`, 'i'); // word boundary
+                const escapedAlias = escapeRegex(alias.toLowerCase())
+                const pattern = new RegExp(`\\b${escapedAlias}\\b`, 'i'); // word boundary
                 if(pattern.test(text)){
                     foundSkills.add(skill);
                     categorizedSkills[category].push(skill);

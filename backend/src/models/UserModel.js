@@ -17,7 +17,7 @@ const skillSchema = new mongoose.Schema({
     },
     category : {
         type : String,
-        enum : ['technical', 'non-technical' , 'tool', 'industry'],
+        enum : ['technical', 'non-technical' , 'tool', 'industry', 'cloud'],
         default : "technical"
     },
     verified : {

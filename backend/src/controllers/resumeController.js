@@ -1,62 +1,13 @@
-import multer from "multer";
-import path from "path";
-import { fileURLToPath } from "url";
-import fs from "fs";
-import pdf from "pdf-parse";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Configure Multer
-const uploadFolder = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadFolder)) {
-  fs.mkdirSync(uploadFolder);
-}
-
-const storage = multer.diskStorage({
-  destination: (req, res, cb) => {
-    cb(null, uploadFolder);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-
-    // FIX: sanitize filename (removes slashes, etc.)
-    const safeName = file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-
-    cb(null, `${uniqueSuffix}-${safeName}`);
-  },
-});
-
-const fileFilter = (req, file, cb) => {
-  // Checks if file is PDF or DOCX
-  const allowedTypes = [
-    "application/pdf",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  ];
-
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true); // Accept file
-  } else {
-    cb(new Error("Only PDF and DOCX files are allowed"), false); // Reject file
-  }
-};
-
-const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
-  limits: {
-    fileSize: 1024 * 1024 * 5,
-  },
-});
-
-export { upload };
-
-import pdf from "pdf-parse";
+// fileName and path : backend\src\controllers\resumeController.js
 import mammoth from "mammoth";
+import fs from "fs";
 import Resume from "../models/ResumeModel.js";
 import { extractSkills } from "../utils/skillExtractor.js";
 import { convertSkillsForUser } from "../utils/convertSkillsForUser.js";
 import { saveSkillsToUser } from "../utils/saveSkillsToUser.js";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const pdf = require("pdf-parse");
 
 const uploadResume = async (req, res) => {
   try {
@@ -70,7 +21,8 @@ const uploadResume = async (req, res) => {
     let extractedText = "";
 
     if (req.file.mimetype == "application/pdf") {
-      let dataBuffer = fs.readFileSync(filePath);
+   
+      let dataBuffer = fs.readFileSync(req.file.path);
       let data = await pdf(dataBuffer);
       extractedText = data.text;
     } else if (
@@ -86,7 +38,7 @@ const uploadResume = async (req, res) => {
     const skillsResult = extractSkills(extractedText);
     console.log("Skills extracted:", skillsResult);
 
-    const userSkills = convertSkillsForUser(skillsResult);
+    const userSkills = await convertSkillsForUser(skillsResult);
     console.log("Formatted skills", userSkills);
    
     const saved = await saveSkillsToUser(req.user._id, userSkills);
