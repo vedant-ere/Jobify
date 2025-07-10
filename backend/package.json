@@ -27,7 +27,8 @@
     "mongoose": "^8.15.2",
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
-    "pdf-parse": "^1.1.1"
+    "pdf-parse": "^1.1.1",
+    "undici": "^7.11.0"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
