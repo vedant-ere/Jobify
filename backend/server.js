@@ -40,6 +40,29 @@ app.get("/health", (req, res) => {
 app.use('/api', routes);
 
 
+
+// In backend/server.js - add this temporary route
+app.get('/test-scraper', async (req, res) => {
+    try {
+        const IndeedScraper = (await import('./src/services/scrapers/indeedScraper.js')).default;
+        const scraper = new IndeedScraper();
+        
+        const jobs = await scraper.scrape({
+            keywords: 'developer',
+            location: 'Mumbai'
+        });
+        
+        res.json({ 
+            success: true, 
+            jobCount: jobs.length, 
+            jobs: jobs.slice(0, 10) // First 10 jobs
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
 connectDB();
 
 

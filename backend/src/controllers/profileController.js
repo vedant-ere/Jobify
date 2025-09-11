@@ -114,9 +114,60 @@ const updateProfile = async (req, res) => {
     // Challenge: Allow users to update name, email, location, etc.
     // What fields should be updatable?
     // What validation do you need?
+    const userId = req.user._id;
+    const {firstName, lastName, title, experience, location} = req.body;
+
+    const updatedData = {};
+    
+    if(firstName !== undefined){
+      if(!firstName.trim()) return res.status(400).json({error : "First Name cannot be empty"});
+      updatedData['profile.firstName'] = firstName.trim();
+    }
+    
+    if(lastName !== undefined){
+      if(!lastName.trim()) return res.status(400).json({error : "Last Name cannot be empty"});
+      updatedData['profile.lastName'] = lastName.trim();
+    }
+
+    if(title !== undefined)
+    {
+      updatedData['profile.title'] =  title.trim();
+    }
+
+    if (experience !== undefined) {
+      if (!Number.isInteger(experience) || experience < 0) {
+        return res.status(400).json({ error: "Experience must be a non-negative integer" });
+      }
+      updatedData['profile.experience'] = experience;
+    }
+
+    if (location) {
+      if (location.city !== undefined) updatedData['profile.location.city'] = location.city.trim();
+      if (location.state !== undefined) updatedData['profile.location.state'] = location.state.trim();
+      if (location.country !== undefined) updatedData['profile.location.country'] = location.country.trim();
+      if (location.remote !== undefined) updatedData['profile.location.remote'] = Boolean(location.remote);
+    }
+
+    if (Object.keys(updatedData).length === 0) {
+      return res.status(400).json({ error: "No valid fields to update" });
+    }
+
+    
+    
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updatedData },
+      { new: true, runValidators: true }
+    ).select('-password');
+    
+    res.json({
+      message: "Profile updated successfully",
+      user: updatedUser
+    });
+
   } catch (error) {
     res.status(500).json({ error: "Failed to update profile" });
   }
 };
 
-export { updateSkills, deleteSkills };
+export { updateSkills, deleteSkills, updateProfile };

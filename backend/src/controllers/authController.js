@@ -40,10 +40,10 @@ const login = async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
-    if (!user) return res.staus(400).send({ message: "Invalid credentials" });
+    if (!user) return res.status(400).send({ message: "Invalid credentials" });
     const isMatch = await user.comparePassword(password);
     if (!isMatch)
-      return res.staus(401).send({ message: "Invalid credentials" });
+      return res.status(401).send({ message: "Invalid credentials" });
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: "24h",
