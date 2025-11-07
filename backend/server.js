@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import connectDB from "./src/config/database.js";
 import User from "./src/models/UserModel.js";
 import routes from './src/routes/index.js';
+import scrapingScheduler from './src/services/scrapingScheduler.js';
 
 dotenv.config();
 const app = express();
@@ -65,6 +66,10 @@ app.get('/test-scraper', async (req, res) => {
 
 connectDB();
 
+// Start the scraping scheduler (runs every 6 hours)
+// For MVP, we comment this out to avoid automatic scraping during development
+// Uncomment in production or trigger manually via API
+// scrapingScheduler.start(6);
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {

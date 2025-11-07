@@ -33,6 +33,6 @@ debug/
 tmp/
 temp/
 .cache/
-
+.claude/
 #public
 uploads/

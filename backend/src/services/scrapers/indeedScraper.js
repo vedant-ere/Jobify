@@ -60,24 +60,40 @@ class IndeedScraper extends BaseScraper {
 
         for (const selector of jobSelectors) {
             const jobCards = $(selector);
-            
+
             if (jobCards.length > 0) {
                 console.log(`[${this.sourceName}] Found ${jobCards.length} jobs using selector: ${selector}`);
                 foundJobs = true;
 
                 jobCards.each((index, element) => {
                     const jobCard = $(element);
-                    const jobTitle = this.extractJobTitle(jobCard);
-                    
-                    if (jobTitle) {
+
+                    // Extract all job fields
+                    const title = this.extractJobTitle(jobCard);
+                    const company = this.extractCompany(jobCard);
+                    const location = this.extractLocation(jobCard);
+                    const salary = this.extractSalary(jobCard);
+                    const description = this.extractDescription(jobCard);
+                    const url = this.extractJobUrl(jobCard);
+
+                    // Only add job if we have at least title and company
+                    if (title && company) {
                         jobs.push({
-                            title: jobTitle,
-                            source: this.sourceName,
-                            scrapedAt: new Date()
+                            title: title,
+                            company: company,
+                            location: location,
+                            description: description || 'No description available',
+                            salary: salary,
+                            skills: this.extractSkillsFromDescription(description),
+                            source: {
+                                name: this.sourceName,
+                                url: url || this.baseURL,
+                                scrapedAt: new Date()
+                            }
                         });
                     }
                 });
-                
+
                 break; // Stop after finding jobs with first working selector
             }
         }
@@ -93,7 +109,7 @@ class IndeedScraper extends BaseScraper {
 
     extractJobTitle(jobCard) {
         const $ = cheerio.load(jobCard);
-        
+
         // Multiple ways Indeed might structure job titles
         const titleSelectors = [
             'h2 a[data-testid="job-title"]',
@@ -106,7 +122,7 @@ class IndeedScraper extends BaseScraper {
 
         for (const selector of titleSelectors) {
             const titleElement = $(selector);
-            
+
             if (titleElement.length > 0) {
                 const title = titleElement.attr('title') || titleElement.text();
                 if (title && title.trim()) {
@@ -116,6 +132,188 @@ class IndeedScraper extends BaseScraper {
         }
 
         return null;
+    }
+
+    extractCompany(jobCard) {
+        const $ = cheerio.load(jobCard);
+
+        // Try multiple selectors for company name
+        const companySelectors = [
+            '[data-testid="company-name"]',
+            'span.companyName',
+            '[data-testid="company-name"] a',
+            '.company',
+            '[data-company-name]'
+        ];
+
+        for (const selector of companySelectors) {
+            const element = $(selector);
+            if (element.length > 0) {
+                const company = element.text().trim();
+                if (company) {
+                    return company;
+                }
+            }
+        }
+
+        return 'Unknown Company';
+    }
+
+    extractLocation(jobCard) {
+        const $ = cheerio.load(jobCard);
+
+        // Try multiple selectors for location
+        const locationSelectors = [
+            '[data-testid="text-location"]',
+            '.companyLocation',
+            '[data-testid="job-location"]',
+            '.location'
+        ];
+
+        for (const selector of locationSelectors) {
+            const element = $(selector);
+            if (element.length > 0) {
+                const locationText = element.text().trim();
+                if (locationText) {
+                    return this.parseLocation(locationText);
+                }
+            }
+        }
+
+        return { city: 'Not specified', remote: false };
+    }
+
+    parseLocation(locationText) {
+        // Check if remote job
+        const isRemote = /remote|work from home|wfh/i.test(locationText);
+
+        // Try to extract city and state
+        // Examples: "Mumbai, Maharashtra", "Bangalore", "Remote in Delhi"
+        const cleanLocation = locationText.replace(/remote in /i, '').trim();
+        const parts = cleanLocation.split(',').map(p => p.trim());
+
+        return {
+            city: parts[0] || 'Not specified',
+            state: parts[1] || undefined,
+            country: 'India', // Since we're using India Indeed
+            remote: isRemote
+        };
+    }
+
+    extractSalary(jobCard) {
+        const $ = cheerio.load(jobCard);
+
+        // Try multiple selectors for salary
+        const salarySelectors = [
+            '[data-testid="attribute_snippet_testid"]',
+            '.salary-snippet',
+            '.salaryText',
+            '[data-testid="salary-snippet"]'
+        ];
+
+        for (const selector of salarySelectors) {
+            const element = $(selector);
+            if (element.length > 0) {
+                const salaryText = element.text().trim();
+                if (salaryText && /₹|rs|lakh|thousand/i.test(salaryText)) {
+                    return this.parseSalary(salaryText);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    parseSalary(salaryText) {
+        // Extract salary range from text like "₹3,00,000 - ₹5,00,000 a year" or "₹30,000 - ₹50,000 a month"
+        const numbers = salaryText.match(/[\d,]+/g);
+
+        if (numbers && numbers.length >= 1) {
+            const cleanNumbers = numbers.map(n => parseInt(n.replace(/,/g, '')));
+
+            return {
+                min: cleanNumbers[0] || null,
+                max: cleanNumbers[1] || cleanNumbers[0] || null,
+                currency: 'INR'
+            };
+        }
+
+        return null;
+    }
+
+    extractDescription(jobCard) {
+        const $ = cheerio.load(jobCard);
+
+        // Try multiple selectors for job description/snippet
+        const descSelectors = [
+            '.job-snippet',
+            '[data-testid="job-snippet"]',
+            '.summary',
+            '.job-snippet-text'
+        ];
+
+        for (const selector of descSelectors) {
+            const element = $(selector);
+            if (element.length > 0) {
+                const description = element.text().trim();
+                if (description) {
+                    return description;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    extractJobUrl(jobCard) {
+        const $ = cheerio.load(jobCard);
+
+        // Try to find job URL
+        const linkSelectors = [
+            'h2 a[href*="/rc/clk"]',
+            'h2 a[href*="/viewjob"]',
+            'a[data-jk]',
+            'h2 a[href]'
+        ];
+
+        for (const selector of linkSelectors) {
+            const link = $(selector);
+            if (link.length > 0) {
+                const href = link.attr('href');
+                if (href) {
+                    // Make absolute URL if relative
+                    return href.startsWith('http') ? href : `${this.baseURL}${href}`;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    extractSkillsFromDescription(description) {
+        if (!description) return [];
+
+        // Common tech skills to look for - basic keyword matching
+        const skillKeywords = [
+            'javascript', 'js', 'typescript', 'python', 'java', 'react', 'angular', 'vue',
+            'node', 'nodejs', 'express', 'django', 'flask', 'spring', 'mongodb', 'sql',
+            'mysql', 'postgresql', 'redis', 'aws', 'azure', 'gcp', 'docker', 'kubernetes',
+            'git', 'ci/cd', 'agile', 'scrum', 'rest', 'api', 'html', 'css', 'sass',
+            'webpack', 'babel', 'jest', 'testing', 'tdd', 'microservices'
+        ];
+
+        const foundSkills = [];
+        const lowerDesc = description.toLowerCase();
+
+        for (const skill of skillKeywords) {
+            // Use word boundary to avoid partial matches
+            const regex = new RegExp(`\\b${skill}\\b`, 'i');
+            if (regex.test(lowerDesc)) {
+                foundSkills.push(skill.toLowerCase());
+            }
+        }
+
+        return [...new Set(foundSkills)]; // Remove duplicates
     }
 
     // Override scrape method to add logging
